@@ -1,27 +1,29 @@
 # NEXT
 
-> Tell NEXT what you want. NEXT figures out what needs to happen next.
+> Tell NEXT what you want. NEXT finds the next move.
 
-NEXT is a goal-to-outcome agent MVP. It turns a desired outcome into a small mission map, surfaces dependencies and blockers, and keeps the focus on the next useful action.
+NEXT is a goal-to-outcome agent MVP. A mission becomes a sequence of actions, with blockers surfaced separately so the user always has a concrete next move.
 
-## Included
-- Web UI
+## v0.2
+- Mission progression and completion
+- Automatic activation of the next queued step
+- Blocker capture and actionable blocker recommendation
 - HTTP API
-- MCP server endpoint at /mcp
-- MCP tools: create_mission, get_mission, analyze_blocker
-- /health
-- Docker deployment
-- In-memory MVP storage
+- MCP server at /mcp
+- MCP tools: create_mission, get_mission, complete_step, analyze_blocker
+- Health endpoint and Docker support
 
 ## Run
 npm install
 npm start
 
-Open http://localhost:3000
+Open http://localhost:3000.
 
 ## Docker
 docker build -t next-ai .
 docker run -p 3000:3000 next-ai
 
-## Status
-v0.1.0 intentionally keeps storage in memory so the product loop can be tested quickly. Persistence/auth can be added after the core workflow is validated.
+## Core loop
+Outcome → Next action → Complete → Advance → Handle blockers.
+
+The MVP uses in-memory storage so the product loop can be tested quickly. Durable storage and authentication can follow after the core experience is validated.
