@@ -42,7 +42,7 @@ function fallbackPlan(input) {
   ];
   const steps = base.map(([t,w,p],i)=>({
     id: randomUUID(), title:t, why:w, priority:p,
-    status:i===0?"next":"queued", dependsOn:i===0?[]:[]
+    status:i===0?"next":"queued", dependsOn:[]
   }));
   return {
     title,
@@ -106,7 +106,7 @@ const responseSchema = {
 
 async function llmPlan(input) {
   if (!process.env.OPENAI_API_KEY) return null;
-  const model=process.env.AI_MODEL || "gpt-5.6-luna";
+  const model=process.env.AI_MODEL || "gpt-6-luna";
   const prompt = [
     "Goal: "+String(input.goal||""),
     "Desired outcome: "+String(input.desiredOutcome||""),
@@ -143,7 +143,7 @@ export async function createPlan(input={}) {
   if(!normalized.goal) throw new Error("goal is required");
   try {
     const ai=await llmPlan(normalized);
-    if(ai) return {...ai, provider:"openai", model:process.env.AI_MODEL||"gpt-5.6-luna"};
+    if(ai) return {...ai, provider:"openai", model:process.env.AI_MODEL||"gpt-6-luna"};
   } catch (error) {
     console.warn("NEXT AI provider unavailable; using fallback:",error.message);
   }
