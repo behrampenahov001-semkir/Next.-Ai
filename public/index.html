@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEXT — Your next move</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,sans-serif;background:#09090b;color:#f4f4f5}
+main{max-width:980px;margin:auto;padding:56px 22px}.brand{font-weight:800;letter-spacing:-.04em;font-size:26px}.tag{color:#a1a1aa}
+.hero{margin:70px 0 36px}.hero h1{font-size:clamp(42px,8vw,76px);line-height:.98;letter-spacing:-.06em;max-width:760px;margin:0 0 22px}
+.card{background:#111114;border:1px solid #27272a;border-radius:22px;padding:22px;margin-top:22px;box-shadow:0 20px 60px #0006}
+input,textarea{width:100%;background:#09090b;border:1px solid #3f3f46;color:#fff;border-radius:12px;padding:14px;font:inherit;margin:7px 0 12px}
+button{border:0;border-radius:12px;padding:13px 18px;font-weight:700;cursor:pointer;background:#fff;color:#09090b}
+.mission{display:none}.step{padding:13px 0;border-bottom:1px solid #27272a}.pill{font-size:12px;color:#a1a1aa}
+</style></head><body><main>
+<div class="brand">NEXT <span class="tag">/ figure out what happens next</span></div>
+<section class="hero"><h1>Tell NEXT what you want.<br>NEXT figures out what needs to happen next.</h1>
+<p class="tag">Turn a goal into a clear mission, dependencies, blockers and one useful next action.</p></section>
+<div class="card"><label>What do you want to achieve?</label>
+<input id="title" placeholder="e.g. Launch my car-service business"><label>What does success look like?</label>
+<textarea id="outcome" rows="3" placeholder="Describe the outcome in one or two sentences"></textarea>
+<button onclick="createMission()">Build my NEXT</button></div>
+<div id="mission" class="card mission"></div>
+</main><script>
+async function createMission(){const title=document.getElementById("title").value.trim();if(!title)return;
+const r=await fetch("/api/missions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,desiredOutcome:document.getElementById("outcome").value.trim()})});render(await r.json())}
+function render(m){const el=document.getElementById("mission");el.style.display="block";el.innerHTML="<h2>"+esc(m.title)+"</h2><p class='tag'>Your mission map</p>"+m.steps.map((s,i)=>"<div class='step'><b>"+(i+1)+". "+esc(s.title)+"</b><div class='pill'>"+s.status+"</div></div>").join("")+"<p><b>Next action:</b> "+esc(m.steps[0].title)+"</p>"}
+function esc(s){return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+</script></body></html>
