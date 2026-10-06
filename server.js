@@ -22,7 +22,7 @@ function buildMission(input){
 const getMission=id=>missions.get(id);
 const touch=m=>m.updatedAt=new Date().toISOString();
 
-app.get("/health",(req,res)=>res.json({ok:true,service:"next-ai",version:"0.4.0",ai:Boolean(process.env.OPENAI_API_KEY)}));
+app.get("/health",(req,res)=>res.json({ok:true,service:"next-ai",version:"0.4.1",ai:Boolean(process.env.OPENAI_API_KEY),mcp:"/mcp"}));
 app.get("/api/missions",(req,res)=>res.json([...missions.values()].sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt))));
 app.post("/api/missions",(req,res)=>{const title=String(req.body?.title||"").trim();if(!title)return res.status(400).json({error:"title is required"});res.status(201).json(buildMission(req.body))});
 
@@ -54,6 +54,7 @@ app.patch("/api/missions/:id/steps/:stepId",(req,res)=>{
   const m=getMission(req.params.id);if(!m)return res.status(404).json({error:"mission not found"});
   const step=m.steps.find(x=>x.id===req.params.stepId);if(!step)return res.status(404).json({error:"step not found"});
   if(req.body?.status!=="done")return res.status(400).json({error:"status must be done"});
+  if(step.status!=="next")return res.status(409).json({error:"step is not the active next step"});
   step.status="done";const next=m.steps.find(x=>x.status==="queued");if(next)next.status="next";
   if(m.steps.every(x=>x.status==="done"))m.status="completed";touch(m);res.json(m);
 });
@@ -75,6 +76,7 @@ function registerMcpTools(server){
   server.tool("complete_step","Mark one mission step done and activate the next queued step. Use this after the user confirms a step is complete.",{missionId:z.string(),stepId:z.string()},async({missionId,stepId})=>{
     const m=getMission(missionId);if(!m)return {content:[{type:"text",text:"mission not found"}]};
     const s=m.steps.find(x=>x.id===stepId);if(!s)return {content:[{type:"text",text:"step not found"}]};
+    if(s.status!=="next")return {content:[{type:"text",text:"step is not the active next step"}]};
     s.status="done";const n=m.steps.find(x=>x.status==="queued");if(n)n.status="next";
     if(m.steps.every(x=>x.status==="done"))m.status="completed";touch(m);
     return {content:[{type:"text",text:JSON.stringify(m,null,2)}]};
@@ -82,6 +84,7 @@ function registerMcpTools(server){
 
   server.tool("analyze_blocker","Record a blocker and turn it into a concrete, testable next action. Use this when progress is blocked.",{missionId:z.string(),blocker:z.string().min(1)},async({missionId,blocker})=>{
     const m=getMission(missionId);
+    if(!m)return {content:[{type:"text",text:"mission not found"}]};
     if(m){m.blockers.push({id:randomUUID(),text:blocker,severity:"medium",createdAt:new Date().toISOString()});touch(m);}
     return {content:[{type:"text",text:JSON.stringify({blocker,diagnosis:"The blocker needs to be specific.",nextAction:"Identify the smallest observable action or decision that removes or tests it."},null,2)}]};
   });
@@ -90,7 +93,7 @@ function registerMcpTools(server){
 function createMcpServer(){
   const server=new McpServer({
     name:"next-ai",
-    version:"0.4.0",
+    version:"0.4.1",
     instructions:"NEXT AI converts goals into executable missions. Prefer plan_goal for planning, create_mission for starting tracking, get_mission before inspecting progress, complete_step only after confirmed completion, and analyze_blocker when progress is blocked."
   });
   registerMcpTools(server);
